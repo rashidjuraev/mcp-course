@@ -65,3 +65,12 @@ Instead of using rigid rules based on file extensions or patterns, your tools sh
 
 - Check the solution in `../solution/` if you get stuck
 - Remember: The goal is to give Claude the data it needs, not to implement complex logic yourself
+
+## Create a make up comment for this tool
+- I first analyzed the git diff using `git diff --name-only <base_branch>` to get a list of changed files. Then, I fetched the full diff content with `git diff <base_branch>
+- I then filtered out any large diffs that would exceed
+- Claude's token limit by truncating them.
+- Finally, I used the `analyze_file_changes` tool to get a list of changed files and their contents.
+- I then created a PR template using the `create_pr_template` tool with the list of changed files and their contents.
+- I saved the generated PR template in a file called "pr-template.md" for future reference.
+- I also added some additional information to the PR template, such as a brief description of the changes made and any relevant context or dependencies.

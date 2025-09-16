@@ -1,0 +1,11 @@
+{
+  "server_name": "pr-agent",
+  "max_diff_lines": 500,
+  "default_base_branch": "main",
+  "template_directory": "../../../templates",
+  "features": {
+    "diff_analysis": true,
+    "template_suggestions": true,
+    "auto_truncation": true
+  }
+}
