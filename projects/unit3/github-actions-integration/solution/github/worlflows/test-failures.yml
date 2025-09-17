@@ -1,0 +1,148 @@
+name: Test Failure Scenarios
+
+on:
+  workflow_dispatch:
+    inputs:
+      failure_type:
+        description: 'Type of failure to simulate'
+        required: true
+        default: 'test_failure'
+        type: choice
+        options:
+        - test_failure
+        - build_failure
+        - syntax_error
+        - dependency_error
+        - timeout_error
+        - partial_failure
+
+jobs:
+  success-job:
+    name: This Job Always Succeeds
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Run successful operation
+      run: |
+        echo "This job will always succeed"
+        python -c "print('Success!')"
+
+  test-failure:
+    name: Test Failure Simulation
+    runs-on: ubuntu-latest
+    if: github.event.inputs.failure_type == 'test_failure'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+    
+    - name: Run failing tests
+      run: |
+        # Temporarily enable the failing tests
+        sed -i 's/@unittest.skip("Skip this test to avoid failure")//g' test_calculator.py
+        pytest test_calculator.py::TestFailingScenarios -v
+
+  build-failure:
+    name: Build Failure Simulation
+    runs-on: ubuntu-latest
+    if: github.event.inputs.failure_type == 'build_failure'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Create syntax error file
+      run: |
+        echo "def broken_function(" > broken_syntax.py
+        echo "    print('Missing closing parenthesis')" >> broken_syntax.py
+    
+    - name: Try to run broken file
+      run: |
+        python broken_syntax.py
+
+  dependency-error:
+    name: Dependency Error Simulation
+    runs-on: ubuntu-latest
+    if: github.event.inputs.failure_type == 'dependency_error'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Try to install non-existent package
+      run: |
+        pip install this-package-does-not-exist-12345
+
+  timeout-error:
+    name: Timeout Error Simulation
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    if: github.event.inputs.failure_type == 'timeout_error'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Long running task that will timeout
+      run: |
+        echo "Starting task that will timeout..."
+        sleep 120  # This will timeout after 1 minute
+
+  partial-failure-1:
+    name: Partial Failure - Job 1 (Success)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.failure_type == 'partial_failure'
+    steps:
+    - name: Successful operation
+      run: |
+        echo "This part of the partial failure test succeeds"
+        exit 0
+
+  partial-failure-2:
+    name: Partial Failure - Job 2 (Failure)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.failure_type == 'partial_failure'
+    steps:
+    - name: Failing operation
+      run: |
+        echo "This part of the partial failure test fails"
+        exit 1
+
+  partial-failure-3:
+    name: Partial Failure - Job 3 (Success)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.failure_type == 'partial_failure'
+    steps:
+    - name: Another successful operation
+      run: |
+        echo "This part also succeeds"
+        exit 0
+
+  cleanup:
+    name: Cleanup After Tests
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [success-job, test-failure, build-failure, dependency-error, timeout-error, partial-failure-1, partial-failure-2, partial-failure-3]
+    steps:
+    - name: Clean up resources
+      run: |
+        echo "Cleaning up after failure simulation tests"
+        echo "Test completed with status: ${{ needs.test-failure.result || needs.build-failure.result || needs.dependency-error.result || needs.timeout-error.result || 'partial' }}"
