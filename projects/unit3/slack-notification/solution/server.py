@@ -271,7 +271,7 @@ async def send_slack_notification(message: str) -> str:
     IMPORTANT: For CI failures, use format_ci_failure_alert prompt first!
     IMPORTANT: For deployments, use format_ci_success_summary prompt first!
     """
-    webhook_url = os.getenv("SLACK_WEBHOOK_URL")
+    webhook_url = os.getenv("https://hooks.slack.com/services/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")
     if not webhook_url:
         return "Error: SLACK_WEBHOOK_URL environment variable not set"
     
